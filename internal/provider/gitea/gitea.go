@@ -124,7 +124,7 @@ func (p *Provider) ListGroupRepos(ctx context.Context, groupPath string, opts pr
 				continue
 			}
 
-			if !opts.MinActivity.IsZero() && giteaRepo.Updated != nil {
+			if !opts.MinActivity.IsZero() && !giteaRepo.Updated.IsZero() {
 				if giteaRepo.Updated.Before(opts.MinActivity) {
 					continue
 				}
@@ -149,8 +149,8 @@ func (p *Provider) ListGroupRepos(ctx context.Context, groupPath string, opts pr
 				Forks:         giteaRepo.Forks,
 			}
 
-			if giteaRepo.Updated != nil {
-				repo.LastActivity = *giteaRepo.Updated
+			if !giteaRepo.Updated.IsZero() {
+				repo.LastActivity = giteaRepo.Updated
 			}
 
 			if giteaRepo.Owner != nil {
@@ -204,8 +204,8 @@ func (p *Provider) GetRepo(ctx context.Context, repoPath string) (*provider.Repo
 		Forks:         giteaRepo.Forks,
 	}
 
-	if giteaRepo.Updated != nil {
-		repo.LastActivity = *giteaRepo.Updated
+	if !giteaRepo.Updated.IsZero() {
+		repo.LastActivity = giteaRepo.Updated
 	}
 
 	if giteaRepo.Owner != nil {

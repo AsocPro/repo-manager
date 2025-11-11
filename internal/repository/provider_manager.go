@@ -1,32 +1,33 @@
-package provider
+package repository
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/asocpro/repo-manager/internal/config"
+	"github.com/asocpro/repo-manager/internal/provider"
 	"github.com/asocpro/repo-manager/internal/provider/generic"
 	"github.com/asocpro/repo-manager/internal/provider/gitea"
 	"github.com/asocpro/repo-manager/internal/provider/github"
 	"github.com/asocpro/repo-manager/internal/provider/gitlab"
 )
 
-// Manager manages provider instances
-type Manager struct {
+// ProviderManager manages provider instances
+type ProviderManager struct {
 	config    *config.Config
-	providers map[string]Provider
+	providers map[string]provider.Provider
 }
 
-// NewManager creates a new provider manager
-func NewManager(cfg *config.Config) *Manager {
-	return &Manager{
+// NewProviderManager creates a new provider manager
+func NewProviderManager(cfg *config.Config) *ProviderManager {
+	return &ProviderManager{
 		config:    cfg,
-		providers: make(map[string]Provider),
+		providers: make(map[string]provider.Provider),
 	}
 }
 
 // GetProvider returns a provider instance by name
-func (m *Manager) GetProvider(ctx context.Context, name string) (Provider, error) {
+func (m *ProviderManager) GetProvider(ctx context.Context, name string) (provider.Provider, error) {
 	// Check if already initialized
 	if p, ok := m.providers[name]; ok {
 		return p, nil
@@ -43,23 +44,23 @@ func (m *Manager) GetProvider(ctx context.Context, name string) (Provider, error
 	}
 
 	// Create provider based on type
-	authConfig := AuthConfig{
+	authConfig := provider.AuthConfig{
 		Token: providerCfg.Token,
 		URL:   providerCfg.URL,
 	}
 
-	var provider Provider
+	var prov provider.Provider
 	var err error
 
 	switch providerCfg.Type {
 	case "gitlab":
-		provider, err = gitlab.New(authConfig)
+		prov, err = gitlab.New(authConfig)
 	case "github":
-		provider, err = github.New(authConfig)
+		prov, err = github.New(authConfig)
 	case "gitea":
-		provider, err = gitea.New(authConfig)
+		prov, err = gitea.New(authConfig)
 	case "generic":
-		provider = generic.New()
+		prov = generic.New()
 	default:
 		return nil, fmt.Errorf("unknown provider type: %s", providerCfg.Type)
 	}
@@ -70,19 +71,19 @@ func (m *Manager) GetProvider(ctx context.Context, name string) (Provider, error
 
 	// Authenticate if needed
 	if providerCfg.Type != "generic" && providerCfg.Token != "" {
-		if err := provider.Authenticate(ctx); err != nil {
+		if err := prov.Authenticate(ctx); err != nil {
 			return nil, fmt.Errorf("failed to authenticate with %s: %w", name, err)
 		}
 	}
 
 	// Cache the provider
-	m.providers[name] = provider
+	m.providers[name] = prov
 
-	return provider, nil
+	return prov, nil
 }
 
 // ListProviders returns all configured provider names
-func (m *Manager) ListProviders() []string {
+func (m *ProviderManager) ListProviders() []string {
 	var names []string
 	for name := range m.config.Providers {
 		names = append(names, name)
@@ -91,7 +92,7 @@ func (m *Manager) ListProviders() []string {
 }
 
 // ListEnabledProviders returns all enabled provider names
-func (m *Manager) ListEnabledProviders() []string {
+func (m *ProviderManager) ListEnabledProviders() []string {
 	var names []string
 	for name, cfg := range m.config.Providers {
 		if cfg.Enabled {
