@@ -1,5 +1,7 @@
 # Repository Manager
 
+> WARNING At this point this is a bunch of vibe coded shenanigans that is being used to prototype how I would best want this to work. Its far from robustly implemneted and will not be stable for the current forseeable future.
+
 A powerful CLI tool for managing multiple git repositories and their worktrees, organized by branch names. Perfect for working on the same feature across multiple repositories simultaneously.
 
 ## Features
